@@ -211,6 +211,8 @@ const commandHandler = async (interaction) => {
     if (!user) return interaction.reply({ content: `You aren't verified yet. Use /verify to get started.`, ephemeral: true });
     let bio = interaction.options.getString('bio');
     user.bio = bio;
+    user.updated = Date.now()
+
     await users.update({ discord: interaction.member.user.id }, { $set: user });
 
     // log this
