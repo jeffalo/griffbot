@@ -179,6 +179,7 @@ const commandHandler = async (interaction) => {
   } else if (interaction.commandName == 'adminadd') {
 
     // bypass verification and add a linked Scratch account for a Discord user
+    if (!interaction.member.roles.cache.get(process.env.MODERATOR_ROLE_ID)) return interaction.reply({ content: 'You do not have permission to use this command!', ephemeral: true });
     let discord = interaction.options.getUser('discord');
     let discordID = discord.id;
     let scratchName = interaction.options.getString('scratch');
