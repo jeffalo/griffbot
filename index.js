@@ -212,6 +212,11 @@ const commandHandler = async (interaction) => {
     let bio = interaction.options.getString('bio');
     user.bio = bio;
     await users.update({ discord: interaction.member.user.id }, { $set: user });
+
+    // log this
+    let logChannel = interaction.guild.channels.cache.get(process.env.LOG_CHANNEL_ID)
+    logChannel.send({content: `${interaction.user.username} (${interaction.user.id}) updated their bio to ${bio}`})
+
     return interaction.reply({ content: `Bio set to ${bio}. Use /id to see it.`, ephemeral: true });
 
     

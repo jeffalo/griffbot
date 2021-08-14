@@ -71,6 +71,10 @@ let verification = module.exports = {
       let verifiedRole = guild.roles.cache.get(process.env.VERIFIED_ROLE_ID);
       member.roles.add(verifiedRole)
 
+      // also we should log this in the log channel
+      let logChannel = guild.channels.cache.get(process.env.LOG_CHANNEL_ID)
+      logChannel.send({content: `${member.user.username} (${member.user.id}) verified as ${scratchName}`})
+
       let existingUser = await users.findOne({ discord: discordID })
       if(existingUser) {
         // the user exists (already verified as another account, we should update their scratch array
