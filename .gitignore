@@ -1,0 +1,5 @@
+.env
+users.json
+node_modules/
+backups/
+update.sh
