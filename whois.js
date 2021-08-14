@@ -7,7 +7,7 @@ module.exports = async function (discordUser) {
     resolve({
       embeds: [{
         "title": `${discordUser.tag}'s Profile`,
-        "description": `**Description**\nThe about me goes right here\n\n**Current list of accounts:**\n${user.scratch.map(i => '- ' + i).join('\n')}\n\nLast updated: <t:${Math.floor(user.updated / 1000)}:R>.`,
+        "description": `**Description**\n${user.bio || 'No bio set. :('}\n\n**Current list of accounts:**\n${user.scratch.map(i => '- ' + i).join('\n')}\n\nLast updated: <t:${Math.floor(user.updated / 1000)}:R>.`,
         "color": '#00a9c0',
         "thumbnail": {
           "url": discordUser.displayAvatarURL()

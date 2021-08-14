@@ -63,6 +63,18 @@ client.on('ready', async () => {
       ]
     },
     {
+      name: 'bio',
+      description: 'Set a bio that appears on your ID card',
+      options: [
+        {
+          name: 'bio',
+          type: 'STRING',
+          description: 'New bio',
+          required: true
+        }
+      ]
+    },
+    {
       name: 'id',
       description: 'Show your linked Scratch accounts',
     },
@@ -192,6 +204,17 @@ const commandHandler = async (interaction) => {
       return interaction.reply({ content: `${discord.tag} is now verified as ${scratchName}.`, ephemeral: true })
     }
 
+  } else if (interaction.commandName == "bio") {
+
+    // set bio
+    let user = await users.findOne({ discord: interaction.member.user.id })
+    if (!user) return interaction.reply({ content: `You aren't verified yet. Use /verify to get started.`, ephemeral: true });
+    let bio = interaction.options.getString('bio');
+    user.bio = bio;
+    await users.update({ discord: interaction.member.user.id }, { $set: user });
+    return interaction.reply({ content: `Bio set to ${bio}. Use /id to see it.`, ephemeral: true });
+
+    
   } else {
     await interaction.reply('Unknown command');
   }
