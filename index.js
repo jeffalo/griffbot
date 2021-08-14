@@ -210,6 +210,9 @@ const commandHandler = async (interaction) => {
     let user = await users.findOne({ discord: interaction.member.user.id })
     if (!user) return interaction.reply({ content: `You aren't verified yet. Use /verify to get started.`, ephemeral: true });
     let bio = interaction.options.getString('bio');
+
+    if(bio.length > 250) return interaction.reply({ content: "Bio is too long. Max length is 250 characters.", ephemeral: true });
+
     user.bio = bio;
     user.updated = Date.now()
 
