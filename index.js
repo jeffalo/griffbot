@@ -80,7 +80,7 @@ client.on('ready', async () => {
       description: 'Show your linked Scratch accounts',
     },
     {
-      name: 'remove',
+      name: 'adminremove',
       description: '(admin) Remove a linked Scratch account for a Discord user',
       options: [
         {
@@ -115,6 +115,58 @@ client.on('ready', async () => {
         }
       ]
     },
+    {
+      name: "apply",
+      description: 'Apply to become a moderator',
+      options: [
+        {
+          name: 'timezone',
+          type: 'STRING',
+          description: 'Your timezone',
+          required: true
+        },
+        {
+          name: 'age',
+          type: "INTEGER",
+          description: 'Your age',
+          required: true
+        },
+        {
+          name: "application",
+          type: "STRING",
+          description: 'Your full application',
+          required: true
+        }
+      ]
+    },
+    {
+      name: "banana",
+      description: 'Image effects',
+      options: [
+        {
+          name: 'effect',
+          type: 'STRING',
+          description: 'Effect to apply',
+          choices: [
+            {
+              name: "banana",
+              value: "banana"
+            },
+            {
+              name: "gaming",
+              value: "gaming"
+            },
+          ],
+          required: true
+        },
+        {
+          name: 'user',
+          type: 'USER',
+          description: 'Avatar',
+          required: false
+        }
+      ]
+    }
   ], process.env.GUILD_ID)
 });
 
@@ -137,10 +189,10 @@ client.on('messageCreate', async (message) => {
 
     console.log(useMention)
 
-    let user = useMention? message.mentions.members.first().user : message.member.user
+    let user = useMention ? message.mentions.members.first().user : message.member.user
 
     message.channel.sendTyping()
-    let bananad = await banana(user.avatarURL())
+    let bananad = await banana.bananaify(user.displayAvatarURL({ size: 4096, dynamic: true }))
     message.channel.send({
       files: [
         { attachment: bananad }
@@ -176,7 +228,7 @@ const commandHandler = async (interaction) => {
     let response = await scratchWhois(interaction.options.getString('user'))
     await interaction.reply(response);
 
-  } else if (interaction.commandName == 'remove') {
+  } else if (interaction.commandName == 'adminremove') {
 
     // remove a linked Scratch account for a Discord user
     if (!interaction.member.roles.cache.get(process.env.MODERATOR_ROLE_ID)) return interaction.reply({ content: 'You do not have permission to use this command!', ephemeral: true });
@@ -228,7 +280,6 @@ const commandHandler = async (interaction) => {
     }
 
   } else if (interaction.commandName == "bio") {
-
     // set bio
     let user = await users.findOne({ discord: interaction.member.user.id })
     if (!user) return interaction.reply({ content: `You aren't verified yet. Use /verify to get started.`, ephemeral: true });
@@ -246,8 +297,29 @@ const commandHandler = async (interaction) => {
     logChannel.send({ content: `${interaction.user.username} (${interaction.user.id}) changed their bio to\`\`\`${bio}\`\`\`` })
 
     return interaction.reply({ content: `Bio set to ${bio}. Use /id to see it.`, ephemeral: true });
+  } else if (interaction.commandName == "apply") {
+    let application = interaction.options.getString('application');
+    let age = interaction.options.get('age').value;
+    let tz = interaction.options.get('timezone').value;
 
+    // get scratch usernames (or tell the user they need to be verified first)
 
+    let user = await users.findOne({ discord: interaction.user.id })
+
+    if (!user) {
+      return interaction.reply({ content: `Thanks for applying, however your application could not be processed. Please ensure you are verified with griffbot (run /verify) before applying.`, ephemeral: true });
+    }
+
+    let logChannel = interaction.guild.channels.cache.get(process.env.APPLICATION_LOG_CHANNEL_ID)
+    if(!logChannel) {
+      return interaction.reply("Thanks for applying, however applications are currently closed. Please try again later.")
+    }
+
+    logChannel.send({ content: `${interaction.user.username} (${interaction.user.id}) applied.\n\nAge: ${age}\nTimezone: ${tz}\n\nApplication:\n> ${application}\n\nScratch accounts: \n${user.scratch.map(i => '- ' + i).join('\n')}\ngriffbot bio: ${user.bio || '[not set]'}` })
+    return interaction.reply({ content: `Thanks for applying.`, ephemeral: true });
+  } else if (interaction.commandName == "banana") {
+    // banana is the image fx module
+    banana.takeInteraction(interaction)
   } else {
     await interaction.reply('Unknown command');
   }
