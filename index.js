@@ -8,6 +8,7 @@ const scratchWhois = require('./scratch-whois.js');
 const banana = require('./banana.js')
 
 const Agenda = require("agenda");
+const errorHandle = require('./error-handle.js');
 
 const agenda = new Agenda({ db: { address: url } });
 
@@ -59,9 +60,9 @@ client.on('ready', async () => {
       // add the role to everyone who needs it
       for (let user of allUsers) {
         // get the member
-        let member = await guild.members.fetch(user.discord);
+        let [member, error] = await errorHandle(guild.members.fetch(user.discord));
 
-        if (!member) {
+        if (!member || error) {
           // console.log(`Could not find member ${user.discord}`);
         } else {
           // console.log(`Found member ${member.user.tag}`);
