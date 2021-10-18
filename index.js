@@ -81,7 +81,7 @@ client.on('ready', async () => {
 
   console.log(`Scheduler started.`);
 
-  await agenda.every("1 hour", "cleanup");
+  await agenda.every("1 minute", "cleanup");
 
   console.log(`Scheduled cleanup. Setting up slash commands.`);
 
