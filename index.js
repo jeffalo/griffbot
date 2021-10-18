@@ -1,11 +1,15 @@
 require('dotenv').config()
 const { Client, Intents, Permissions } = require('discord.js');
 const webserver = require('./express.js')
-const { users } = require('./db.js')
+const { users, url } = require('./db.js')
 const verification = require('./verification.js');
 const whois = require('./whois.js');
 const scratchWhois = require('./scratch-whois.js');
 const banana = require('./banana.js')
+
+const Agenda = require("agenda");
+
+const agenda = new Agenda({ db: { address: url } });
 
 const client = new Client({
   intents: [
@@ -20,9 +24,69 @@ const client = new Client({
 });
 
 client.on('ready', async () => {
-  console.log(`Logged in as ${client.user.tag}! Setting up slash commands.`);
+  console.log(`Logged in as ${client.user.tag}! Setting up scheduler.`);
+
+
+
+  // setup adgenda
+
+  agenda.define("cleanup", async (job) => {
+    console.log(`Running cleanup job`);
+    // a cleanup job to make sure that all verified users get their verified role
+
+    let allUsers = await users.find()
+
+    // get the guild
+    let guild = await client.guilds.cache.get(process.env.GUILD_ID);
+
+    // get the verified role
+    let verifiedRole = guild.roles.cache.get(process.env.VERIFIED_ROLE_ID);
+
+    let allMembersWithRole = verifiedRole.members
+
+    // remove the role if the user is not verified
+
+    for (let member of allMembersWithRole) {
+      try {
+        let user = allUsers.find(u => u.discord == member[1].user.id)
+  
+        if (!user) {
+          console.log(`Removing role from ${member[1].user.username}`);
+          await member[1].roles.remove(verifiedRole);
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    // add the role to everyone who needs it
+    for (let user of allUsers) {
+      // get the member
+      let member = await guild.members.fetch(user.discord);
+
+      if (!member) {
+        // console.log(`Could not find member ${user.discord}`);
+      } else {
+        // console.log(`Found member ${member.user.tag}`);
+
+        // assign the verified role to the user
+        await member.roles.add(verifiedRole);
+
+        console.log(`Added verified role to ${member.user.tag}`);
+      }
+    }
+  });
+
+  await agenda.start();
+
+  console.log(`Scheduler started.`);
+
+  await agenda.every("1 hour", "cleanup");
+
+  console.log(`Scheduled cleanup. Setting up slash commands.`);
+
   // set up slash commands
-  await client.application.commands.set([
+  let commands = await client.application.commands.set([
     {
       name: 'test',
       description: 'A test command',
@@ -42,6 +106,7 @@ client.on('ready', async () => {
     {
       name: 'whois',
       description: '(admin) See linked Scratch account for a user (Output is visible to everyone)',
+      defaultPermission: false,
       options: [
         {
           name: 'user',
@@ -54,6 +119,7 @@ client.on('ready', async () => {
     {
       name: 'scratchwhois',
       description: '(admin) See linked Discord accounts for a Scratch username (Output is visible to everyone)',
+      defaultPermission: false,
       options: [
         {
           name: 'user',
@@ -81,6 +147,7 @@ client.on('ready', async () => {
     },
     {
       name: 'adminremove',
+      defaultPermission: false,
       description: '(admin) Remove a linked Scratch account for a Discord user',
       options: [
         {
@@ -99,6 +166,7 @@ client.on('ready', async () => {
     },
     {
       name: 'adminadd',
+      defaultPermission: false,
       description: '(admin) Bypass verification steps and linked Scratch account for a Discord user',
       options: [
         {
@@ -168,6 +236,32 @@ client.on('ready', async () => {
       ]
     }
   ], process.env.GUILD_ID)
+
+  console.log(`Slash commands set up. Now setting permissions.`);
+
+  // loop over the commands and for each that contains admin in the description, set the permissions to require the moderator role
+
+  for (let command of commands) {
+    console.log(`Setting permissions for ${command[1].name}`);
+    if (command[1].description.includes("admin")) {
+      let permissions = [
+        {
+          id: process.env.MODERATOR_ROLE_ID,
+          type: 'ROLE',
+          permission: true,
+        },
+      ];
+
+      await command[1].permissions.set({ permissions });
+      console.log(`Set permissions for ${command[1].name}`);
+    } else {
+      // reset permissions
+      await command[1].permissions.set({ permissions: [] });
+      console.log(`Reset permissions for ${command[1].name}`);
+    }
+  }
+
+  console.log(`Permissions set up.`);
 });
 
 client.on('interactionCreate', async interaction => {
@@ -311,7 +405,7 @@ const commandHandler = async (interaction) => {
     }
 
     let logChannel = interaction.guild.channels.cache.get(process.env.APPLICATION_LOG_CHANNEL_ID)
-    if(!logChannel) {
+    if (!logChannel) {
       return interaction.reply("Thanks for applying, however applications are currently closed. Please try again later.")
     }
 
