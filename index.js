@@ -31,49 +31,50 @@ client.on('ready', async () => {
   // setup adgenda
 
   agenda.define("cleanup", async (job) => {
-    console.log(`Running cleanup job`);
-    // a cleanup job to make sure that all verified users get their verified role
+    try {
+      console.log(`Running cleanup job`);
+      // a cleanup job to make sure that all verified users get their verified role
 
-    let allUsers = await users.find()
+      let allUsers = await users.find()
 
-    // get the guild
-    let guild = await client.guilds.cache.get(process.env.GUILD_ID);
+      // get the guild
+      let guild = await client.guilds.cache.get(process.env.GUILD_ID);
 
-    // get the verified role
-    let verifiedRole = guild.roles.cache.get(process.env.VERIFIED_ROLE_ID);
+      // get the verified role
+      let verifiedRole = guild.roles.cache.get(process.env.VERIFIED_ROLE_ID);
 
-    let allMembersWithRole = verifiedRole.members
+      let allMembersWithRole = verifiedRole.members
 
-    // remove the role if the user is not verified
+      // remove the role if the user is not verified
 
-    for (let member of allMembersWithRole) {
-      try {
+      for (let member of allMembersWithRole) {
         let user = allUsers.find(u => u.discord == member[1].user.id)
-  
+
         if (!user) {
           console.log(`Removing role from ${member[1].user.username}`);
           await member[1].roles.remove(verifiedRole);
         }
-      } catch (error) {
-        console.log(error)
+      }
+
+      // add the role to everyone who needs it
+      for (let user of allUsers) {
+        // get the member
+        let member = await guild.members.fetch(user.discord);
+
+        if (!member) {
+          // console.log(`Could not find member ${user.discord}`);
+        } else {
+          // console.log(`Found member ${member.user.tag}`);
+
+          // assign the verified role to the user
+          await member.roles.add(verifiedRole);
+
+          console.log(`Added verified role to ${member.user.tag}`);
+        }
       }
     }
-
-    // add the role to everyone who needs it
-    for (let user of allUsers) {
-      // get the member
-      let member = await guild.members.fetch(user.discord);
-
-      if (!member) {
-        // console.log(`Could not find member ${user.discord}`);
-      } else {
-        // console.log(`Found member ${member.user.tag}`);
-
-        // assign the verified role to the user
-        await member.roles.add(verifiedRole);
-
-        console.log(`Added verified role to ${member.user.tag}`);
-      }
+    catch (err) {
+      console.log(err);
     }
   });
 
