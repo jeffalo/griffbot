@@ -24,9 +24,10 @@ const client = new Client({
   partials: ["CHANNEL"]
 });
 
+webserver.start(client);
+
 client.on('ready', async () => {
   console.log(`Logged in as ${client.user.tag}! Setting up scheduler.`);
-
 
 
   // setup adgenda

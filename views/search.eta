@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%~ includeFile('../components/head', it) %>
+</head>
+
+<body>
+  <h1>search results</h1>
+  <p>it is often more effective to just use the discord slash command interface, so this should only be used for database
+    administration (such as hard-deleting a user). it does not update roles, so you will have to wait for the cleanup.</p>
+  <a href="/dashboard">🔙 dashboard</a>
+  <hr>
+  <ul>
+    <% it.results.forEach(function(user){ %>
+      <li>
+        <button id="delete" data-id="<%=user._id %>">🗑️</button>
+        discord: <%= user.discord %>
+        bio: <%= user.bio || "not set" %>
+          <ul>
+            <% user.scratch.forEach(function(scratch){ %>
+              <li>
+                <%= scratch %>
+              </li>
+            <% }) %>
+          </ul>
+      </li>
+      <% }) %>
+  </ul>
+</body>
+<script>
+  let deleteButtons = document.querySelectorAll('#delete');
+
+  deleteButtons.forEach(async function (button) {
+    button.addEventListener('click', async function (event) {
+      let id = event.target.dataset.id;
+      let should = confirm(`are you sure you want to delete ${id}?`)
+
+      if (!should) return;
+
+      let response = await fetch('/delete-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id: id
+        })
+      }).then(r => r.json())
+
+      if (response.success) {
+        alert('deleted');
+        window.location.reload();
+      } else {
+        alert('failed to delete');
+      }
+    });
+  });
+</script>
+
+</html>

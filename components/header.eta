@@ -1,0 +1,12 @@
+<div>
+  <h1>griffbot dashboard</h1>
+  <div class="user">
+    <span>logged in as</span>
+    <img class="logo" src="https://cdn.discordapp.com/avatars/<%= it.user.id %>/<%= it.user.avatar %>.jpg" alt="">
+    <span class="username"><%= it.user.username %></span>
+    <a href="/logout">
+      logout
+    </a>
+  </div>
+  <hr>
+</div>

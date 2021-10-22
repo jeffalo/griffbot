@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%~ includeFile('../components/head', it) %>
+</head>
+
+<body>
+  <%~ includeFile('../components/header', it) %>
+    <main>
+      <details id="sendas">
+        <summary>💬 send message as griffbot</summary>
+        <form id="send">
+          <label for="channel">channel</label>
+          <input type="number" name="channel" id="channel">
+          <label for="message">content</label>
+          <textarea id="message" name="message" cols="48" id="textarea" placeholder="Enter your message here" rows="8">
+          </textarea>
+          <input type="submit" value="send">
+        </form>
+      </details>
+      <details id="stats">
+        <summary>📈 stats</summary>
+        <ul>
+          <li>total verified users: <%= it.userCount %></li>
+          <li>uptime: <%= process.uptime() %></li>
+          <li>next cleanup: <%= it.jobData.next %></li>
+          <li>last cleanup: <%= it.jobData.last %></li>
+          <li>cleanup running?: <%= it.jobData.locked %></li>
+          <p>(the cleanup is the process that verifies that only verified users have the role. it runs every <%= it.jobData.interval %>)</p>
+      </details>
+      </ul>
+      <details id="db">
+        <summary>🔨 database admin</summary>
+        <a href="/dashboard/list">list all users</a>
+        <!-- <a href="/dashboard/list">something else</a> -->
+        <hr>
+        <div>
+          <b>find user by scratch name</b>
+          <form action="/dashboard/search-scratch" method="get">
+            <label for="user">username:</label>
+            <input type="text" name="username" id="username">
+            <input type="submit" value="get">
+          </form>
+          <b>find user by discord id</b>
+          <form action="/dashboard/search-discord" method="get">
+            <label for="user">id:</label>
+            <input type="text" name="user" id="user">
+            <input type="submit" value="get">
+          </form>
+        </div>
+      </details>
+      <details id="config">
+        <summary>📝 configure griffbot</summary>
+        <p>coming soon!</p>
+      </details>
+    </main>
+</body>
+<script>
+  const send = document.getElementById('send');
+  const channel = document.getElementById('channel');
+  const message = document.getElementById('message');
+
+  send.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {
+      channel: channel.value,
+      message: message.value
+    };
+    let response = await fetch('/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    }).then(res => res.json())
+
+    if (response.success) {
+      message.value = '';
+      channel.value = '';
+    } else {
+      alert(response.error);
+    }
+  });
+
+  // db admin:
+
+
+  // detail manager:
+
+  // add event listeners to all the details elements
+
+  const details = document.querySelectorAll('details');
+
+  details.forEach(detail => {
+    detail.addEventListener('toggle', (e) => {
+      rememberDetails()
+    });
+  });
+
+  function rememberDetails() {
+    // store the current open detail elements in local storage
+    const details = document.querySelectorAll('details');
+
+    const openDetails = []
+
+    details.forEach(detail => {
+      if (detail.open) {
+        openDetails.push(detail.id)
+      }
+    });
+
+    console.log(openDetails);
+
+    localStorage.setItem('openDetails', openDetails.join(','));
+  }
+
+  // restore the open details from local storage
+  const openDetails = localStorage.getItem('openDetails');
+
+  if (openDetails) {
+    const details = document.querySelectorAll('details');
+
+    openDetails.split(',').forEach(id => {
+      details.forEach(detail => {
+        if (detail.id === id) {
+          detail.open = true;
+        }
+      });
+    });
+  }
+
+  // this is such a hack!
+</script>
+
+</html>
