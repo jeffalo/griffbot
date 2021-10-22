@@ -14,8 +14,7 @@
           <label for="channel">channel</label>
           <input type="number" name="channel" id="channel">
           <label for="message">content</label>
-          <textarea id="message" name="message" cols="48" id="textarea" placeholder="Enter your message here" rows="8">
-          </textarea>
+          <textarea id="message" name="message" cols="48" id="textarea" placeholder="Enter your message here" rows="8"></textarea>
           <input type="submit" value="send">
         </form>
       </details>
@@ -77,7 +76,7 @@
 
     if (response.success) {
       message.value = '';
-      channel.value = '';
+      // channel.value = '';
     } else {
       alert(response.error);
     }
