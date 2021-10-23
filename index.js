@@ -305,14 +305,13 @@ client.on('messageCreate', async (message) => {
 
   let threshold = parseInt(process.env.PING_THRESHOLD) || 10;
   
-  let found = await users.findOne({ discord: message.member.id });
+  // let found = await users.findOne({ discord: message.member.id });
 
-  if (found) {
-    threshold += 5;
-  }
+  // if (found) {
+  //   threshold += 5;
+  // }
   
   if (message.mentions.members.size >= threshold && !message.member.user.bot) {
-    // first check if the user is verified, if they are the treshold is 5 more
 
     // add the user to the mass ping list
     let logChannel = await message.guild.channels.fetch(process.env.LOG_CHANNEL_ID);
