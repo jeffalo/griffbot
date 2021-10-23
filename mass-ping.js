@@ -12,6 +12,6 @@ let data = module.exports = {
   }
 }
 
-setInterval(() => {
-  console.log(data.pingers);
-}, 1000);
+// setInterval(() => {
+//   console.log(data.pingers);
+// }, 1000);
