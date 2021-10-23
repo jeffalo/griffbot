@@ -223,6 +223,20 @@ app.post('/send', async (req, res) => {
   }
 })
 
+app.post('/pinger/add', async (req,res)=>{
+  massPing.addPinger(req.body.pinger)
+  res.json({
+    success: true
+  })
+})
+
+app.post('/pinger/remove', async (req,res)=>{
+  massPing.removePinger(req.body.pinger)
+  res.json({
+    success: true
+  })
+})
+
 app.get('/dashboard/search-scratch', async (req, res) => {
   // find all users with the given scratch username
 

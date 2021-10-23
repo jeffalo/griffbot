@@ -26,9 +26,14 @@
           <li>next cleanup: <%= it.jobData.next %></li>
           <li>last cleanup: <%= it.jobData.last %></li>
           <li>cleanup running?: <%= it.jobData.locked %></li>
-          <li>pingers: <%= JSON.stringify(it.pingers) %></li>
+          <li>pingers: <%= JSON.stringify(it.pingers) %>          
+            <button id="add-pinger">add pinger</button>
+            <button id="remove-pinger">remove pinger</button>
+          </li>
         </ul>
-        <p>(the cleanup is the process that verifies that only verified users have the role. it runs every <%= it.jobData.interval %>)</p>
+        <blockquote>
+          <p>(the cleanup is the process that verifies that only verified users have the role. it runs every <%= it.jobData.interval %>)</p>
+        </blockquote>
       </details>
       <details id="db">
         <summary>🔨 database admin</summary>
@@ -83,7 +88,44 @@
     }
   });
 
-  // db admin:
+  // pinger stuff:
+
+  const addPinger = document.getElementById('add-pinger');
+  const removePinger = document.getElementById('remove-pinger');
+
+  addPinger.addEventListener('click', async () => {
+    let id = prompt('enter the id of the user you want to add as a pinger');
+
+    if (id) {
+      let response = await fetch('/pinger/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          pinger: id
+        })
+      }).then(res => res.json())
+      window.location.reload()
+    }
+  })
+
+  removePinger.addEventListener('click', async () => {
+    let id = prompt('enter the id of the user you want to remove from the pinger list');
+
+    if (id) {
+      let response = await fetch('/pinger/remove', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          pinger: id
+        })
+      }).then(res => res.json())
+      window.location.reload()
+    }
+  })
 
 
   // detail manager:
