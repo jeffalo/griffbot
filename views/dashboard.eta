@@ -26,9 +26,10 @@
           <li>next cleanup: <%= it.jobData.next %></li>
           <li>last cleanup: <%= it.jobData.last %></li>
           <li>cleanup running?: <%= it.jobData.locked %></li>
-          <p>(the cleanup is the process that verifies that only verified users have the role. it runs every <%= it.jobData.interval %>)</p>
+          <li>pingers: <%= JSON.stringify(it.pingers) %></li>
+        </ul>
+        <p>(the cleanup is the process that verifies that only verified users have the role. it runs every <%= it.jobData.interval %>)</p>
       </details>
-      </ul>
       <details id="db">
         <summary>🔨 database admin</summary>
         <a href="/dashboard/list">list all users</a>

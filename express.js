@@ -5,6 +5,7 @@ const port = 1337
 const { users, agendaJobs } = require('./db.js')
 const eta = require("eta")
 const cookieParser = require('cookie-parser')
+const massPing = require('./mass-ping.js')
 
 app.engine("eta", eta.renderFile)
 
@@ -129,8 +130,9 @@ app.get('/dashboard', async (req, res) => {
   // send the dashboard page
 
   const userCount = await users.count()
-
   const job = await agendaJobs.findOne()
+
+  const pingers = massPing.pingers
 
   function time_ago(time) {
 
@@ -198,7 +200,8 @@ app.get('/dashboard', async (req, res) => {
   res.render('dashboard', {
     user: res.locals.user,
     userCount,
-    jobData
+    jobData,
+    pingers
   })
 })
 

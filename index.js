@@ -6,6 +6,7 @@ const verification = require('./verification.js');
 const whois = require('./whois.js');
 const scratchWhois = require('./scratch-whois.js');
 const banana = require('./banana.js')
+const massPing = require('./mass-ping.js')
 
 const Agenda = require("agenda");
 const errorHandle = require('./error-handle.js');
@@ -295,6 +296,39 @@ client.on('messageCreate', async (message) => {
         { attachment: bananad }
       ]
     })
+  }
+
+  // mass ping detection
+  // detect if a message contains 10 or more mentions and is sent by a non-bot
+
+  if(!message.mentions.members.size) return;
+
+  let threshold = parseInt(process.env.PING_THRESHOLD) || 10;
+  
+  let found = await users.findOne({ discord: message.member.id });
+
+  if (found) {
+    threshold += 5;
+  }
+  
+  if (message.mentions.members.size >= threshold && !message.member.user.bot) {
+    // first check if the user is verified, if they are the treshold is 5 more
+
+    // add the user to the mass ping list
+    let logChannel = await message.guild.channels.fetch(process.env.LOG_CHANNEL_ID);
+    if (!massPing.pingers.includes(message.member.user.id)) {
+      massPing.addPinger(message.member.user.id);
+      await logChannel.send(`${message.member.user.tag} was spamming with ${message.mentions.members.size} mentions. (this is ${message.mentions.members.size-threshold} over the limit) If they do this again, they will be muted. user: <@${message.author.id}>`);
+    } else {
+      // this isnt their first warning. 
+      // we will now kick them (to the rules channel) and mute them, by adding them the PINGER_ROLE_ID
+
+      let pingerRole = await message.guild.roles.fetch(process.env.PINGER_ROLE_ID);
+
+      await logChannel.send(`${message.member.user.tag} was muted for spamming with ${message.mentions.members.size} mentions. (this is ${message.mentions.members.size-threshold} over the limit). user: <@${message.author.id}>`);
+      await message.member.roles.add(pingerRole);
+      // await message.member.kick()
+    }
   }
 })
 
