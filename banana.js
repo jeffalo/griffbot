@@ -1,4 +1,5 @@
 // banana is the griffpatch server image effect thing
+const config = require('./config.js')
 
 const sharp = require('sharp')
 const fetch = require('node-fetch')
@@ -13,6 +14,13 @@ async function getImageFromURL(url) {
 module.exports = {
   takeInteraction: async function (interaction) {
     // we can now do whatever with the interaction
+
+    // but quickly, check if fun is enabled
+    const funEnabled = config.settings.FUN_ENABLED === "true";
+
+    if (!funEnabled) {
+      return interaction.reply("Fun is disabled :(");
+    }
 
     // first get the image effect requested
 

@@ -57,7 +57,14 @@
       </details>
       <details id="config">
         <summary>📝 configure griffbot</summary>
-        <p>coming soon!</p>
+        <ul>
+          <% for (const [key, value] of Object.entries(it.config)) { %>
+            <li>
+              <%= it.configMap[key] || key %>: <%= value %>
+              <button id="edit-config" data-config="<%= key %>">📝</button>
+            </li>
+          <% } %>
+        </ul>
       </details>
     </main>
 </body>
@@ -127,6 +134,31 @@
     }
   })
 
+  // config stuff:
+
+  const editButtons = document.querySelectorAll('#edit-config');
+
+  editButtons.forEach(async function (button) {
+    button.addEventListener('click', async function (event) {
+      let setting = event.target.dataset.config;
+
+      let value = prompt('enter the new value for ' + setting);
+
+      if (value) {
+        let response = await fetch('/config/edit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            setting: setting,
+            value: value
+          })
+        }).then(res => res.json())
+        window.location.reload()
+      }
+    })
+  })
 
   // detail manager:
 

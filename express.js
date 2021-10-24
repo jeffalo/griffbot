@@ -6,6 +6,7 @@ const { users, agendaJobs } = require('./db.js')
 const eta = require("eta")
 const cookieParser = require('cookie-parser')
 const massPing = require('./mass-ping.js')
+const config = require('./config.js')
 
 app.engine("eta", eta.renderFile)
 
@@ -15,6 +16,8 @@ app.set("views", "./views")
 
 app.use(cookieParser())
 app.use(express.json()); // used to parse JSON bodies
+
+app.use(express.static('static'))
 
 const moderators = process.env.MODERATOR_IDS.split(',')
 
@@ -43,7 +46,7 @@ app.use(async (req, res, next) => { // get user
 
 app.get('/', (req, res) => {
   // if the user is logged in, redirect to the dashboard, otherwise redirect to the login page
-  
+
   if (res.locals.loggedIn) {
     res.redirect('/dashboard')
   } else {
@@ -168,7 +171,7 @@ app.get('/dashboard', async (req, res) => {
     var seconds = (+new Date() - time) / 1000,
       token = 'ago',
       list_choice = 1;
-  
+
     if (seconds == 0) {
       return 'Just now'
     }
@@ -188,7 +191,7 @@ app.get('/dashboard', async (req, res) => {
       }
     return time;
   }
-  
+
 
   const jobData = {
     next: time_ago(job.nextRunAt),
@@ -196,42 +199,62 @@ app.get('/dashboard', async (req, res) => {
     interval: job.repeatInterval,
     locked: !!job.lockedAt,
   }
-  
+
+  // a map of config keys to human-readable names
+
+  const configMap = {
+    "ACTIVE_THRESHOLD": "Active Threshold (top x users from mee6 leaderboard)",
+    "PING_THRESHOLD": "Ping Threshold (amount of mentions to be considered a mass-ping)"
+  }
+
   res.render('dashboard', {
     user: res.locals.user,
     userCount,
     jobData,
-    pingers
+    pingers,
+    config: config.settings,
+    configMap
   })
 })
 
 app.post('/send', async (req, res) => {
   const content = req.body.message
   const channelID = req.body.channel
-  
+
   if (client) {
     // just making sure the client is ready
-    
+
     let channel = await client.channels.cache.get(channelID)
-    if(!channel) return res.json({ error: "channel not found" })
-    
+    if (!channel) return res.json({ error: "channel not found" })
+
     channel.send(content)
-    
+
     res.json({
       success: true
     })
   }
 })
 
-app.post('/pinger/add', async (req,res)=>{
+app.post('/pinger/add', async (req, res) => {
   massPing.addPinger(req.body.pinger)
   res.json({
     success: true
   })
 })
 
-app.post('/pinger/remove', async (req,res)=>{
+app.post('/pinger/remove', async (req, res) => {
   massPing.removePinger(req.body.pinger)
+  res.json({
+    success: true
+  })
+})
+
+app.post('/config/edit', async(req, res) => {
+  const key = req.body.setting
+  const value = req.body.value
+
+  config.set(key, value)
+
   res.json({
     success: true
   })

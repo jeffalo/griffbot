@@ -1,7 +1,9 @@
 require('dotenv').config()
+const fetch = require('node-fetch')
 const { Client, Intents, Permissions } = require('discord.js');
 const webserver = require('./express.js')
 const { users, url } = require('./db.js')
+const config = require('./config.js')
 const verification = require('./verification.js');
 const whois = require('./whois.js');
 const scratchWhois = require('./scratch-whois.js');
@@ -25,18 +27,23 @@ const client = new Client({
   partials: ["CHANNEL"]
 });
 
-webserver.start(client);
 
 client.on('ready', async () => {
   console.log(`Logged in as ${client.user.tag}! Setting up scheduler.`);
-
+  // initialize config
+  config.init();
+  
+  // start webserver
+  webserver.start(client);
 
   // setup adgenda
 
   agenda.define("cleanup", async (job) => {
     try {
       console.log(`Running cleanup job`);
-      // a cleanup job to make sure that all verified users get their verified role
+      // a cleanup job to make sure that all verified users get their verified role and super active users get their super active role
+
+      console.log(`Cleaning up verified users`);
 
       let allUsers = await users.find()
 
@@ -73,6 +80,43 @@ client.on('ready', async () => {
           await member.roles.add(verifiedRole);
 
           console.log(`Added verified role to ${member.user.tag}`);
+        }
+      }
+
+      // super active role:
+      console.log('Begin super active role allocation')
+      let mee6Data = await fetch(`https://mee6.xyz/api/plugins/levels/leaderboard/${process.env.GUILD_ID}`).then(r=>r.json());
+      let activeRole = guild.roles.cache.get(process.env.ACTIVE_ROLE_ID);
+      let allMembersWithActiveRole = activeRole.members
+
+      const activeThreshold = config.settings.ACTIVE_THRESHOLD; // the top X users from the mee6 leaderboard
+
+      // remove the role if the user is not within the active threshold
+      let topUsers = mee6Data.players.slice(0, activeThreshold);
+      for (let member of allMembersWithActiveRole) {
+        // if the user is not in the leaderboard, remove the role
+        let found = topUsers.find(u => u.id == member[1].user.id)
+
+        if (!found) {
+          console.log(`Removing role from ${member[1].user.username}`);
+          await member[1].roles.remove(activeRole);
+        }
+      }
+
+      // add the role to everyone who needs it
+      for (let user of topUsers) {
+        // get the member
+        let [member, error] = await errorHandle(guild.members.fetch(user.id));
+
+        if (!member || error) {
+          // console.log(`Could not find member ${user.discord}`);
+        } else {
+          // console.log(`Found member ${member.user.tag}`);
+
+          // assign the verified role to the user
+          await member.roles.add(activeRole);
+
+          console.log(`Added active role to ${member.user.tag}`);
         }
       }
     }
@@ -283,6 +327,12 @@ client.on('messageCreate', async (message) => {
   if (message.content.startsWith('!banana')) {
     // initiate the bananaifier
 
+    const funEnabled = config.settings.FUN_ENABLED === "true";
+
+    if (!funEnabled) {
+      return message.channel.send('Fun is disabled :(');
+    }
+
     let useMention = !!message.mentions.members.first()
 
     console.log(useMention)
@@ -303,7 +353,7 @@ client.on('messageCreate', async (message) => {
 
   if(!message.mentions.members.size) return;
 
-  let threshold = parseInt(process.env.PING_THRESHOLD) || 10;
+  let threshold = parseInt(config.settings.PING_THRESHOLD) || 10;
   
   // let found = await users.findOne({ discord: message.member.id });
 
