@@ -491,7 +491,12 @@ const commandHandler = async (interaction) => {
     }
 
     let logChannel = interaction.guild.channels.cache.get(process.env.APPLICATION_LOG_CHANNEL_ID)
-    if (!logChannel) {
+    
+    const applicationsOpen = config.settings.APPLICATIONS_OPEN === "true";
+
+    // if applications are closed or there is no logChannel, tell the user
+
+    if (!applicationsOpen || !logChannel) {
       return interaction.reply("Thanks for applying, however applications are currently closed. Please try again later.")
     }
 

@@ -19,6 +19,7 @@ module.exports = {
       ACTIVE_THRESHOLD: process.env.ACTIVE_THRESHOLD,
       PING_THRESHOLD: process.env.PING_THRESHOLD,
       FUN_ENABLED: process.env.FUN_ENABLED,
+      APPLICATIONS_OPEN: process.env.APPLICATIONS_OPEN,
     }
 
     // 2.
