@@ -113,7 +113,7 @@ app.get('/handle', async (req, res) => {
   } else {
     // if user is an admin, set cookie and redirect to admin page
 
-    res.cookie('discord_token', json.access_token)
+    res.cookie('discord_token', json.access_token, { expires: new Date(Date.now() + 9999999999) })
 
     res.redirect(`/dashboard`)
   }
