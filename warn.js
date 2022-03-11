@@ -93,6 +93,16 @@ module.exports = {
 
     await warns.remove({ _id: warnID });
 
+    let deletedConfirmationMessageActions = new MessageActionRow()
+      .addComponents(
+        new MessageButton()
+          .setCustomId('delete-warn')
+          .setLabel('Deleted')
+          .setStyle('DANGER')
+          .setDisabled(true),
+      )
+    
+    interaction.message.edit({ components: [deletedConfirmationMessageActions] })
     interaction.reply({ content: 'Warn deleted!', ephemeral: true });
   },
   takeInfractionsInteraction: async function (interaction) {
