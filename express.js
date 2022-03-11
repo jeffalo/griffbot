@@ -2,7 +2,7 @@ const express = require('express')
 const fetch = require('node-fetch')
 const app = express()
 const port = 1337
-const { users, agendaJobs } = require('./db.js')
+const { users, agendaJobs, warns } = require('./db.js')
 const eta = require("eta")
 const cookieParser = require('cookie-parser')
 const massPing = require('./mass-ping.js')
@@ -133,12 +133,23 @@ app.get('/dashboard', async (req, res) => {
   // send the dashboard page
 
   const userCount = await users.count()
+  const infractionCount = await warns.count()
+  const recentInfractions = await warns.find({}, {
+    limit: 5,
+    sort: {
+      date: -1
+    }
+  })
+
+  let recentInfractionsWithExtraData = await getAdditionalInfractionInfo(recentInfractions)
+
+  console.log(recentInfractionsWithExtraData)
+
   const job = await agendaJobs.findOne()
 
   const pingers = massPing.pingers
 
   function time_ago(time) {
-
     switch (typeof time) {
       case 'number':
         break;
@@ -192,7 +203,6 @@ app.get('/dashboard', async (req, res) => {
     return time;
   }
 
-
   const jobData = {
     next: time_ago(job.nextRunAt),
     last: time_ago(job.lastRunAt),
@@ -210,6 +220,8 @@ app.get('/dashboard', async (req, res) => {
   res.render('dashboard', {
     user: res.locals.user,
     userCount,
+    infractionCount,
+    recentInfractions: recentInfractionsWithExtraData,
     jobData,
     pingers,
     config: config.settings,
@@ -217,21 +229,103 @@ app.get('/dashboard', async (req, res) => {
   })
 })
 
+app.get('/dashboard/infractions', async (req, res) => {
+  const infractions = await warns.find({}, {
+    sort: {
+      date: -1
+    }
+  })
+
+  let infractionsWithData = await getAdditionalInfractionInfo(infractions)
+  res.render('search-infractions', {
+    results: infractionsWithData,
+  })
+})
+
+app.get('/dashboard/infractions/:id', async (req, res) => {
+  const infraction = await warns.findOne({
+    _id: req.params.id
+  })
+
+  if (!infraction) {
+    return res.status(404).send("")
+  }
+
+  let infractionWithExtraData = await getAdditionalInfractionInfo([infraction])
+
+  res.render('infraction', {
+    infraction: infractionWithExtraData[0],
+  })
+})
+
+app.delete('/dashboard/infractions/:id', async (req, res) => {
+  const infraction = await warns.findOne({
+    _id: req.params.id
+  })
+
+  if (!infraction) {
+    return res.status(404).json({ error: "not found" })
+  }
+
+  await warns.remove({
+    _id: infraction._id
+  })
+
+  res.json({ success: true })
+})
+
+app.get('/dashboard/search-infractions', async (req, res) => {
+  // find all users with the given scratch username
+
+  let infractions = await warns.find({ user: req.query.user }, { sort: { date: -1 } })
+
+  let infractionsWithExtraData = await getAdditionalInfractionInfo(infractions)
+
+  res.render('search-infractions', {
+    results: infractionsWithExtraData,
+  })
+})
+
+app.get('/dashboard/list', async (req, res) => {
+  let foundUsers = await users.find()
+
+  res.render('search', {
+    results: foundUsers,
+  })
+})
+
 app.post('/send', async (req, res) => {
   const content = req.body.message
   const channelID = req.body.channel
+  let embed = {}
 
+  try {
+    embed = JSON.parse(req.body.embed)
+  }
+  catch (e) {
+    return res.json({error: `invalid embed, ${e.message}`})
+  }
+  
   if (client) {
     // just making sure the client is ready
 
     let channel = await client.channels.cache.get(channelID)
     if (!channel) return res.json({ error: "channel not found" })
 
-    channel.send(content)
-
-    res.json({
-      success: true
-    })
+    try {
+      if (!content) {
+        await channel.send({embeds: embed})
+      } else {
+        await channel.send({content, embeds: embed})
+      }
+      res.json({
+        success: true
+      })
+    } catch (e) {
+      res.json({
+        error: e.message
+      })
+    }
   }
 })
 
@@ -319,6 +413,50 @@ app.get('/logout', async (req, res) => {
 
   res.redirect('/login')
 })
+
+async function getAdditionalInfractionInfo(infractions) {
+  return new Promise(async (resolve, reject) => {
+    infractions.forEach(async infraction => {
+      infraction.userDiscord = {
+        id: '0',
+        bot: false,
+        system: false,
+        flags: null,
+        username: 'Unknown User',
+        discriminator: '0000',
+        tag: 'Unknown User#0000',
+        avatar: 'https://cdn.discordapp.com/embed/avatars/0.png',
+        banner: undefined,
+        accentColor: undefined,
+        verified: true,
+        mfaEnabled: true
+      }
+  
+      infraction.moderatorDiscord = {
+        id: '0',
+        bot: false,
+        system: false,
+        flags: null,
+        username: 'Unknown User',
+        discriminator: '0000',
+        tag: 'Unknown User#0000',
+        avatar: 'https://cdn.discordapp.com/embed/avatars/0.png',
+        banner: undefined,
+        accentColor: undefined,
+        verified: true,
+        mfaEnabled: true
+      }
+  
+      if (client) {
+        let userDiscord = await client.users.fetch(infraction.user)
+        if (userDiscord) infraction.userDiscord = userDiscord
+        let moderatorDiscord = await client.users.fetch(infraction.moderator)
+        if (moderatorDiscord) infraction.moderatorDiscord = moderatorDiscord
+      }
+    })
+    resolve(infractions)
+  })
+}
 
 function start(discordClient) {
   client = discordClient

@@ -12,9 +12,14 @@
         <summary>💬 send message as griffbot</summary>
         <form id="send">
           <label for="channel">channel</label>
-          <input type="number" name="channel" id="channel">
+          <input type="number" name="channel" id="channel" value="<%= process.env.GENERAL_CHANNEL_ID %>">
           <label for="message">content</label>
-          <textarea id="message" name="message" cols="48" id="textarea" placeholder="Enter your message here" rows="8"></textarea>
+          <textarea id="message" name="message" placeholder="Enter your message here"></textarea>
+          <details id="embed" style="margin-left: 15px;">
+            <summary>✨Embed</summary>
+            <button style="display: block; margin: 10px 0px;" id="fill-embed">fill with JSON</button>
+            <textarea id="message-embed" name="message-embed" placeholder="Enter your embed JSON here" rows="10">[]</textarea>
+          </details>
           <input type="submit" value="send">
         </form>
       </details>
@@ -22,6 +27,7 @@
         <summary>📈 stats</summary>
         <ul>
           <li>total verified users: <%= it.userCount %></li>
+          <li>total infractions: <%= it.infractionCount %></li>
           <li>uptime: <%= process.uptime() %></li>
           <li>next cleanup: <%= it.jobData.next %></li>
           <li>last cleanup: <%= it.jobData.last %></li>
@@ -35,8 +41,21 @@
           <p>(the cleanup is the process that verifies that only verified users have the role. it runs every <%= it.jobData.interval %>)</p>
         </blockquote>
       </details>
+      <details id="infractions">
+        <summary>⚖️ infractions</summary>
+        <a href="/dashboard/infractions">list all infractions</a>
+        <hr>
+        <b>5 latest infractions</b>
+        <ul>
+          <% it.recentInfractions.forEach(function(infraction){ %>
+            <li>
+              <a href="/dashboard/infractions/<%= infraction._id %>"><%= infraction.userDiscord.tag %>: <%= infraction.message %></a>
+            </li>
+          <% }) %>
+        </ul>
+      </details>
       <details id="db">
-        <summary>🔨 database admin</summary>
+        <summary>🔨 user admin</summary>
         <a href="/dashboard/list">list all users</a>
         <!-- <a href="/dashboard/list">something else</a> -->
         <hr>
@@ -72,12 +91,24 @@
   const send = document.getElementById('send');
   const channel = document.getElementById('channel');
   const message = document.getElementById('message');
+  const messageEmbed = document.getElementById('message-embed');
+  const fillEmbedButton = document.getElementById('fill-embed');
+
+  fillEmbedButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    messageEmbed.value = JSON.stringify([{
+      title: 'test',
+      description: 'test',
+      color: '#00a9c0',
+    }], null, 2);
+  })
 
   send.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = {
       channel: channel.value,
-      message: message.value
+      message: message.value,
+      embed: messageEmbed.value || "[]"
     };
     let response = await fetch('/send', {
       method: 'POST',

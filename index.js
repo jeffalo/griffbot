@@ -8,10 +8,12 @@ const verification = require('./verification.js');
 const whois = require('./whois.js');
 const scratchWhois = require('./scratch-whois.js');
 const banana = require('./banana.js')
+const report = require('./report.js');
 const massPing = require('./mass-ping.js')
 
 const Agenda = require("agenda");
 const errorHandle = require('./error-handle.js');
+const warn = require('./warn.js');
 
 const agenda = new Agenda({ db: { address: url } });
 
@@ -282,6 +284,56 @@ client.on('ready', async () => {
           required: false
         }
       ]
+    },
+    {
+      name: "report",
+      description: 'Report something rule breaking',
+      options: [
+        {
+          name: 'title',
+          type: 'STRING',
+          description: "Title your report",
+          required: true
+        },
+        {
+          name: 'message',
+          type: 'STRING',
+          description: "Let us know what's wrong",
+          required: true
+        },
+      ]
+    },
+    {
+      name: "warn",
+      defaultPermission: false,
+      description: '(admin) Warn a user for breaking the rules',
+      options: [
+        {
+          name: 'user',
+          type: 'USER',
+          description: 'user',
+          required: true
+        },
+        {
+          name: 'message',
+          type: 'STRING',
+          description: "What did they do this time",
+          required: true
+        },
+      ]
+    },
+    {
+      name: "infractions",
+      defaultPermission: false,
+      description: '(admin) List warns given to a user',
+      options: [
+        {
+          name: 'user',
+          type: 'USER',
+          description: 'user',
+          required: true
+        }
+      ]
     }
   ], process.env.GUILD_ID)
 
@@ -351,7 +403,7 @@ client.on('messageCreate', async (message) => {
   // mass ping detection
   // detect if a message contains 10 or more mentions and is sent by a non-bot
 
-  if(!message.mentions.members.size) return;
+  if(!message?.mentions?.members?.size) return;
 
   let threshold = parseInt(config.settings.PING_THRESHOLD) || 10;
   
@@ -431,7 +483,6 @@ const commandHandler = async (interaction) => {
     }
 
   } else if (interaction.commandName == 'adminadd') {
-
     // bypass verification and add a linked Scratch account for a Discord user
     if (!interaction.member.roles.cache.get(process.env.MODERATOR_ROLE_ID)) return interaction.reply({ content: 'You do not have permission to use this command!', ephemeral: true });
     let discord = interaction.options.getUser('discord');
@@ -502,6 +553,12 @@ const commandHandler = async (interaction) => {
 
     logChannel.send({ content: `${interaction.user.username} (${interaction.user.id}) applied.\n\nAge: ${age}\nTimezone: ${tz}\n\nApplication:\n> ${application}\n\nScratch accounts: \n${user.scratch.map(i => '- ' + i).join('\n')}\ngriffbot bio: ${user.bio || '[not set]'}` })
     return interaction.reply({ content: `Thanks for applying.`, ephemeral: true });
+  } else if (interaction.commandName == "report") {
+    report.takeInteraction(interaction)
+  } else if (interaction.commandName == "warn") {
+    warn.takeInteraction(interaction)
+  } else if (interaction.commandName == "infractions") {
+    warn.takeInfractionsInteraction(interaction)
   } else if (interaction.commandName == "banana") {
     // banana is the image fx module
     banana.takeInteraction(interaction)
@@ -514,6 +571,12 @@ const buttonHandler = async (interaction) => {
   if (interaction.customId === 'continue') {
     let response = await verification.check(interaction.member)
     await interaction.reply(response);
+  } else if (interaction.customId === 'mark-resolved') {
+    report.takeResolveInteraction(interaction)
+  } else if (interaction.customId === 'mark-open') {
+    report.takeReopenInteraction(interaction)
+  } else if (interaction.customId === 'delete-warn') {
+    warn.takeDeleteInteraction(interaction)
   } else {
     await interaction.reply('Unknown button');
   }

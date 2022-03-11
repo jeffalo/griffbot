@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%~ includeFile('../components/head', it) %>
+</head>
+
+<body>
+  <h1>infraction <%= it.infraction._id %></h1>
+  <a href="/dashboard">🔙 dashboard</a>
+  <hr>
+  <p>User: <b><%= it.infraction.userDiscord.tag %></b></p>
+  <p>Moderator: <b><%= it.infraction.moderatorDiscord.tag %></b></p>
+  <label for="message">Content:</label>
+  <textarea id="message" style="resize: none;" readonly><%= it.infraction.message %></textarea>
+  <fieldset>
+    <legend>Actions</legend>
+    <button id="remove" data-id="<%= it.infraction._id %>">Remove</button>
+    <button disabled>Ban user</button>
+    <button disabled>Timeout user</button>
+  </fieldset>
+</body>
+<script>
+  let removeButton = document.querySelector('#remove');
+
+  removeButton.addEventListener('click', (e) => {
+    let id = event.target.dataset.id;
+
+    let should = confirm(`Are you sure you want to remove infraction ${id}?`)
+
+    if (!should) return;
+
+    fetch('/dashboard/infractions/'+id, {
+      method: 'DELETE',
+    }).then(r => r.json())
+    .then(r => {
+      if (r.success) {
+        alert('Removed');
+        document.location.href = '/dashboard/infractions';
+      } else {
+        alert(r.error);
+      }
+    })
+  })
+</script>
+</html>

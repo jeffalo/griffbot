@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%~ includeFile('../components/head', it) %>
+</head>
+
+<body>
+  <h1>infractions search</h1>
+  <a href="/dashboard">🔙 dashboard</a>
+  <hr>
+  <ul>
+    <% it.results.forEach(function(infraction){ %>
+      <li>
+        <a href="/dashboard/infractions/<%= infraction._id %>"><%= infraction.userDiscord.tag %>: <%= infraction.message %></a>
+      </li>
+    <% }) %>
+  </ul>
+</body>
+
+</html>
