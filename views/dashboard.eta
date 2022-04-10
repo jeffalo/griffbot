@@ -13,6 +13,11 @@
         <form id="send">
           <label for="channel">channel</label>
           <input type="number" name="channel" id="channel" value="<%= process.env.GENERAL_CHANNEL_ID %>">
+          <label for="channeltype">channel type</label>
+          <select name="channeltype" id="channeltype">
+            <option value="channel">channel</option>
+            <option value="dm">user</option>
+          </select>
           <label for="message">content</label>
           <textarea id="message" name="message" placeholder="Enter your message here"></textarea>
           <details id="embed" style="margin-left: 15px;">
@@ -90,6 +95,7 @@
 <script>
   const send = document.getElementById('send');
   const channel = document.getElementById('channel');
+  const channeltype = document.getElementById('channeltype');
   const message = document.getElementById('message');
   const messageEmbed = document.getElementById('message-embed');
   const fillEmbedButton = document.getElementById('fill-embed');
@@ -107,6 +113,7 @@
     e.preventDefault();
     const data = {
       channel: channel.value,
+      channeltype: channeltype.value,
       message: message.value,
       embed: messageEmbed.value || "[]"
     };

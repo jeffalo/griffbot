@@ -297,6 +297,7 @@ app.get('/dashboard/list', async (req, res) => {
 app.post('/send', async (req, res) => {
   const content = req.body.message
   const channelID = req.body.channel
+  const channelType = req.body.channeltype
   let embed = {}
 
   try {
@@ -308,8 +309,12 @@ app.post('/send', async (req, res) => {
   
   if (client) {
     // just making sure the client is ready
+    let channel;
+    if (channelType == "channel")
+      channel = await client.channels.cache.get(channelID)
+    else
+      channel = await client.users.fetch(channelID)
 
-    let channel = await client.channels.cache.get(channelID)
     if (!channel) return res.json({ error: "channel not found" })
 
     try {
