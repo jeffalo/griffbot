@@ -538,7 +538,7 @@ const commandHandler = async (interaction) => {
     let user = await users.findOne({ discord: interaction.user.id })
 
     if (!user) {
-      return interaction.reply({ content: `Thanks for applying, however your application could not be processed. Please ensure you are verified with griffbot (run /verify) before applying.`, ephemeral: true });
+      // return interaction.reply({ content: `Thanks for applying, however your application could not be processed. Please ensure you are verified with griffbot (run /verify) before applying.`, ephemeral: true });
     }
 
     let logChannel = interaction.guild.channels.cache.get(process.env.APPLICATION_LOG_CHANNEL_ID)
@@ -551,7 +551,7 @@ const commandHandler = async (interaction) => {
       return interaction.reply("Thanks for applying, however applications are currently closed. Please try again later.")
     }
 
-    logChannel.send({ content: `${interaction.user.username} (${interaction.user.id}) applied.\n\nAge: ${age}\nTimezone: ${tz}\n\nApplication:\n> ${application}\n\nScratch accounts: \n${user.scratch.map(i => '- ' + i).join('\n')}\ngriffbot bio: ${user.bio || '[not set]'}` })
+    logChannel.send({ content: `${interaction.user.username} (${interaction.user.id}) applied.\n\nAge: ${age}\nTimezone: ${tz}\n\nApplication:\n> ${application}\n\nScratch accounts: \n${user ? user.scratch.map(i => '- ' + i).join('\n') : "none found"}\ngriffbot bio: ${user.bio || '[not set]'}` })
     return interaction.reply({ content: `Thanks for applying.`, ephemeral: true });
   } else if (interaction.commandName == "report") {
     report.takeInteraction(interaction)
