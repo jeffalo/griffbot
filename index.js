@@ -286,6 +286,18 @@ client.on('ready', async () => {
       ]
     },
     {
+      name: "bean",
+      description: 'bean somebody',
+      options: [
+        {
+          name: 'user',
+          type: 'USER',
+          description: 'Who to bean',
+          required: true
+        }
+      ]
+    },
+    {
       name: "report",
       description: 'Report something rule breaking',
       options: [
@@ -341,7 +353,7 @@ client.on('ready', async () => {
 
   // loop over the commands and for each that contains admin in the description, set the permissions to require the moderator role
 
-  for (let command of commands) {
+  /* for (let command of commands) {
     console.log(`Setting permissions for ${command[1].name}`);
     if (command[1].description.includes("admin")) {
       let permissions = [
@@ -359,9 +371,9 @@ client.on('ready', async () => {
       await command[1].permissions.set({ permissions: [] });
       console.log(`Reset permissions for ${command[1].name}`);
     }
-  }
+  } */
 
-  console.log(`Permissions set up.`);
+  console.log(`Reminder to setup permissions.`);
 });
 
 client.on('interactionCreate', async interaction => {
@@ -562,6 +574,9 @@ const commandHandler = async (interaction) => {
   } else if (interaction.commandName == "banana") {
     // banana is the image fx module
     banana.takeInteraction(interaction)
+  } else if (interaction.commandName == "bean") {
+    // banana is the image fx module
+    interaction.reply(`<@${interaction.options.getUser('user').id}> got beaned`)
   } else {
     await interaction.reply('Unknown command');
   }
