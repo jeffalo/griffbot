@@ -286,6 +286,18 @@ client.on('ready', async () => {
       ]
     },
     {
+      name: "bean",
+      description: 'bean somebody',
+      options: [
+        {
+          name: 'user',
+          type: 'USER',
+          description: 'Who to bean',
+          required: true
+        }
+      ]
+    },
+    {
       name: "report",
       description: 'Report something rule breaking',
       options: [
@@ -562,6 +574,9 @@ const commandHandler = async (interaction) => {
   } else if (interaction.commandName == "banana") {
     // banana is the image fx module
     banana.takeInteraction(interaction)
+  } else if (interaction.commandName == "bean") {
+    // banana is the image fx module
+    interaction.reply(`<@${interaction.options.getUser('user').id}> got beaned`)
   } else {
     await interaction.reply('Unknown command');
   }
