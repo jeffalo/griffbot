@@ -1,6 +1,6 @@
 const monk = require('monk')
 
-const url = process.env.MONGO_URL || 'localhost/griffbot'
+const url = process.env.MONGO_URL || '127.0.0.1/griffbot'
 
 const db = monk(url)
 const users = db.get('users')
