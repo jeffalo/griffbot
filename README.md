@@ -1,4 +1,4 @@
-# griffbot
+# Griffbot
 A custom Discord moderation bot for the Griffpatch Discord community.
 
 ## Dependencies
